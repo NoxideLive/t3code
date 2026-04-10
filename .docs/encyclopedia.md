@@ -26,6 +26,13 @@ The root filesystem path for a project. In [the orchestration model][1], it is t
 
 A Git worktree used as an isolated workspace for a thread. If a thread has a `worktreePath` in [the contracts][1], it runs there instead of in the main working tree. Git operations live in [GitCore.ts][3].
 
+Worktree performance improvements are handled in the workspace indexing/search path:
+
+- Workspace entry search now prefers Git-native listing (`git ls-files`) for repositories (including worktrees), which avoids full recursive filesystem walks in large trees.
+- Git ignore filtering is batched via `git check-ignore --stdin` so worktree scans stay bounded even with many candidate paths.
+- Workspace indexes are cached briefly (TTL + bounded key count), and concurrent lookups for the same workspace share one build, reducing duplicate work under load.
+- Worktree and workspace-root paths are normalized before cache lookups, which improves cache hit rate when callers use equivalent paths.
+
 ### Thread timeline
 
 #### Thread
